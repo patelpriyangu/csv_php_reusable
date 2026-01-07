@@ -10,6 +10,7 @@
             --primary: #2563eb;
             --danger: #dc2626;
             --success: #16a34a;
+            --warning: #f59e0b;
             --bg: #f8fafc;
             --border: #e2e8f0;
         }
@@ -114,7 +115,8 @@
 
     <div class="toolbar">
         <h1>Inventory Manager (Millions Ready)</h1>
-        <div style="margin-left: auto;">
+        <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+            <a href="/history" class="btn btn-outline">📊 Import History</a>
             <a href="/download-template" class="btn btn-outline" download>⬇ Download Template</a>
             <a href="/export" class="btn btn-outline" download>⤓ Export Data</a>
         </div>
@@ -135,23 +137,41 @@
             <h2>Preview (First 20 Rows)</h2>
             <div id="fileStats" style="margin-bottom: 1rem; color: #666;"></div>
 
-            <table id="validTable">
-                <thead>
-                    <tr>
-                        <th>SKU</th>
-                        <th>Product Name</th>
-                        <th>Quantity</th>
-                        <th>Price</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div id="validRowsSection">
+                <h3 style="color: var(--success);">✓ Valid Rows (<span id="validCount">0</span>)</h3>
+                <table id="validTable">
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Product Name</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div id="warningRowsSection" class="hidden" style="margin-top: 2rem;">
+                <h3 style="color: var(--warning);">⚠ Warnings (<span id="warningCount">0</span>)</h3>
+                <div id="warningList" style="background: #fffbeb; padding: 1rem; border-radius: 4px; max-height: 200px; overflow-y: auto;">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <div id="errorRowsSection" class="hidden" style="margin-top: 2rem;">
+                <h3 style="color: var(--danger);">✗ Error Rows (<span id="errorCount">0</span>)</h3>
+                <div id="errorList" style="background: #fef2f2; padding: 1rem; border-radius: 4px; max-height: 300px; overflow-y: auto;">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
 
             <div style="margin-top: 2rem;">
                 <button id="startImportBtn" class="btn btn-primary"
                     style="background: var(--success); font-size: 1.1rem;">
                     2. Start Full Import
                 </button>
+                <p id="importWarning" style="margin-top: 0.5rem; color: #666; font-size: 0.9rem;"></p>
             </div>
         </div>
     </div>
@@ -172,6 +192,7 @@
 
     <script>
         let currentFileId = null;
+        let currentSessionId = null;
         let currentOffset = 0;
 
         // 1. Upload
@@ -191,6 +212,7 @@
                 if (!upData.success) throw new Error(upData.message);
 
                 currentFileId = upData.file_id;
+                currentSessionId = upData.session_id;
 
                 // Step B: Get Preview
                 const prevRes = await fetch('/preview', {
@@ -211,15 +233,95 @@
 
         function renderPreview(data) {
             document.getElementById('previewSection').classList.remove('hidden');
-            document.getElementById('fileStats').textContent = `File Size: ${data.file_size_mb} MB`;
+            
+            let statsText = `File Size: ${data.file_size_mb} MB | Total Rows: ${data.total_preview_count} | Valid: ${data.valid_count || 0}`;
+            if (data.warning_count > 0) {
+                statsText += ` | Warnings: ${data.warning_count}`;
+            }
+            if (data.error_count > 0) {
+                statsText += ` | Errors: ${data.error_count}`;
+            }
+            document.getElementById('fileStats').textContent = statsText;
 
-            const tbody = document.getElementById('validTable').querySelector('tbody');
-            tbody.innerHTML = '';
-            data.preview_rows.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${row.sku}</td><td>${row.product_name}</td><td>${row.quantity}</td><td>${row.price}</td>`;
-                tbody.appendChild(tr);
-            });
+            // Render valid rows
+            const validTbody = document.getElementById('validTable').querySelector('tbody');
+            validTbody.innerHTML = '';
+            document.getElementById('validCount').textContent = data.valid_count || 0;
+            
+            if (data.preview_rows && data.preview_rows.length > 0) {
+                data.preview_rows.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${row.sku || ''}</td><td>${row.product_name || ''}</td><td>${row.quantity || ''}</td><td>${row.price || ''}</td>`;
+                    validTbody.appendChild(tr);
+                });
+            } else {
+                validTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #999;">No valid rows in preview</td></tr>';
+            }
+
+            // Render warnings
+            const warningSection = document.getElementById('warningRowsSection');
+            const warningList = document.getElementById('warningList');
+            const warningCount = document.getElementById('warningCount');
+            
+            if (data.warning_rows && Object.keys(data.warning_rows).length > 0) {
+                warningSection.classList.remove('hidden');
+                warningCount.textContent = Object.keys(data.warning_rows).length;
+                
+                let warningHtml = '';
+                for (const [rowNum, warnings] of Object.entries(data.warning_rows)) {
+                    warningHtml += `<div style="margin-bottom: 0.75rem; padding: 0.5rem; background: white; border-left: 3px solid var(--warning);">
+                        <strong>Row ${rowNum}:</strong><br>`;
+                    for (const [field, message] of Object.entries(warnings)) {
+                        warningHtml += `<span style="margin-left: 1rem;">⚠ ${message}</span><br>`;
+                    }
+                    warningHtml += '</div>';
+                }
+                warningList.innerHTML = warningHtml;
+            } else {
+                warningSection.classList.add('hidden');
+            }
+
+            // Render errors
+            const errorSection = document.getElementById('errorRowsSection');
+            const errorList = document.getElementById('errorList');
+            const errorCount = document.getElementById('errorCount');
+            
+            if (data.error_rows && Object.keys(data.error_rows).length > 0) {
+                errorSection.classList.remove('hidden');
+                errorCount.textContent = Object.keys(data.error_rows).length;
+                
+                let errorHtml = '';
+                for (const [rowNum, errors] of Object.entries(data.error_rows)) {
+                    errorHtml += `<div style="margin-bottom: 0.75rem; padding: 0.5rem; background: white; border-left: 3px solid var(--danger);">
+                        <strong>Row ${rowNum}:</strong><br>`;
+                    for (const [field, message] of Object.entries(errors)) {
+                        errorHtml += `<span style="margin-left: 1rem;">• ${message}</span><br>`;
+                    }
+                    errorHtml += '</div>';
+                }
+                errorList.innerHTML = errorHtml;
+            } else {
+                errorSection.classList.add('hidden');
+            }
+
+            // Update import button message
+            const warning = document.getElementById('importWarning');
+            let messages = [];
+            
+            if (data.warning_count > 0) {
+                messages.push(`⚠️ ${data.warning_count} duplicate SKUs detected - last occurrence will be kept`);
+            }
+            if (data.error_count > 0) {
+                messages.push(`❌ ${data.error_count} rows have errors and will be skipped`);
+            }
+            
+            if (messages.length > 0) {
+                warning.textContent = messages.join('. ') + `. ${data.valid_count} rows will be imported.`;
+                warning.style.color = data.error_count > 0 ? 'var(--danger)' : 'var(--warning)';
+            } else {
+                warning.textContent = `✓ All ${data.valid_count} rows are valid and will be imported.`;
+                warning.style.color = 'var(--success)';
+            }
         }
 
         // 2. Import Loop
@@ -234,7 +336,11 @@
                 const res = await fetch('/import-chunk', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ file_id: currentFileId, offset: currentOffset })
+                    body: JSON.stringify({ 
+                        file_id: currentFileId, 
+                        offset: currentOffset,
+                        session_id: currentSessionId 
+                    })
                 });
                 const data = await res.json();
 
@@ -243,11 +349,11 @@
                 // Update UI
                 const pct = data.progress + '%';
                 document.getElementById('progressFill').style.width = pct;
-                document.getElementById('progressText').textContent = pct + ` (${data.processed_count} rows processed)`;
+                document.getElementById('progressText').textContent = pct + ` (${data.valid_count || data.processed_count} valid rows processed)`;
 
                 // Log
                 const log = document.getElementById('log');
-                log.innerHTML += `<div>Processed chunk @ ${currentOffset}. Errors: ${data.error_count}</div>`;
+                log.innerHTML += `<div>Chunk @ ${currentOffset}: ${data.valid_count || 0} valid, ${data.error_count} errors</div>`;
                 log.scrollTop = log.scrollHeight;
 
                 if (!data.is_complete) {
@@ -255,8 +361,8 @@
                     // Small delay to allow UI refresh and prevent browser confusing 100% CPU usage
                     setTimeout(processChunk, 50);
                 } else {
-                    alert('Import Complete!');
-                    window.location.reload();
+                    alert('Import Complete! View details in Import History.');
+                    window.location.href = '/history';
                 }
 
             } catch (err) {

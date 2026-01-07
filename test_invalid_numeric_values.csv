@@ -1,0 +1,12 @@
+sku,product_name,quantity,price
+NUM001,Product With Text Quantity,ABC,29.99
+NUM002,Product With Text Price,100,INVALID
+NUM003,Product With Special Chars,@#$,49.99
+NUM004,Product With Decimal Quantity,50.5,39.99
+NUM005,Product Valid,75,19.99
+NUM006,Product Negative Quantity,-10,59.99
+NUM007,Product With Currency Symbol,100,$99.99
+NUM008,Product With Commas,1000,1,234.56
+NUM009,Product With Spaces,50 units,29.99
+NUM010,Product Both Invalid,NOT_A_NUMBER,ALSO_INVALID
+

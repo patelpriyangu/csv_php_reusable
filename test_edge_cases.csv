@@ -1,0 +1,14 @@
+sku,product_name,quantity,price
+EDGE001,Product with very long name that exceeds normal length expectations and might cause issues with database field length limits,100,29.99
+EDGE002,Product-With-Dashes,50,39.99
+EDGE003,Product_With_Underscores,75,49.99
+EDGE004,Product.With.Dots,200,59.99
+EDGE005,Product With   Multiple   Spaces,150,19.99
+EDGE006,"Product, With, Commas",80,24.99
+EDGE007,"Product ""With"" Quotes",90,34.99
+EDGE008,Product With 数字,110,44.99
+EDGE009,Product With Émojis 🚀,120,54.99
+EDGE010,Product With Zero Values,0,0.00
+EDGE011,Product With Large Numbers,999999,99999.99
+EDGE012,Product With Decimals,100,0.01
+

@@ -1,0 +1,17 @@
+sku,product_name,quantity,price
+MIXED001,Valid Product One,100,29.99
+MIXED002,,50,39.99
+MIXED003,Valid Product Three,75,49.99
+MIXED004,Invalid Quantity,INVALID,59.99
+MIXED005,Valid Product Five,200,19.99
+,Missing SKU,150,24.99
+MIXED007,Valid Product Seven,80,34.99
+MIXED008,Invalid Price,90,NOT_A_NUMBER
+MIXED009,Valid Product Nine,110,44.99
+MIXED010,Missing Quantity,,54.99
+MIXED011,Valid Product Eleven,120,64.99
+MIXED012,,,99.99
+MIXED013,Valid Product Thirteen,130,74.99
+MIXED014,Both Invalid,WRONG,ALSO_WRONG
+MIXED015,Valid Product Fifteen,140,84.99
+

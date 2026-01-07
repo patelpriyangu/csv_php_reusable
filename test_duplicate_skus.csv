@@ -1,0 +1,10 @@
+sku,product_name,quantity,price
+DUP001,First Occurrence,100,29.99
+DUP002,Unique Product,50,39.99
+DUP001,Duplicate SKU,75,49.99
+DUP003,Another Unique,200,59.99
+DUP002,Another Duplicate,150,19.99
+DUP004,Valid Product,80,24.99
+DUP001,Third Duplicate,90,34.99
+DUP005,Last Unique,110,44.99
+

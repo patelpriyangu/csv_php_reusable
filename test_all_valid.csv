@@ -1,0 +1,12 @@
+sku,product_name,quantity,price
+VALID001,Product Alpha,100,29.99
+VALID002,Product Beta,50,49.99
+VALID003,Product Gamma,75,19.99
+VALID004,Product Delta,200,99.99
+VALID005,Product Epsilon,150,39.99
+VALID006,Product Zeta,80,59.99
+VALID007,Product Eta,120,24.99
+VALID008,Product Theta,90,44.99
+VALID009,Product Iota,110,34.99
+VALID010,Product Kappa,60,54.99
+

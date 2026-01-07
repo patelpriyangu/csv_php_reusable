@@ -1,0 +1,12 @@
+sku,product_name,quantity,price
+ERROR001,,50,29.99
+,Missing SKU Product,100,39.99
+ERROR003,Product Without Quantity,,49.99
+ERROR004,Product Complete,75,59.99
+,Missing Both,,19.99
+ERROR006,,200,
+,,,99.99
+ERROR008,Only SKU and Name,125,
+ERROR009,Product Valid,80,24.99
+,,,
+

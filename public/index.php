@@ -71,6 +71,17 @@ switch ($path) {
     case '/export':
         $controller->export();
         break;
+    case '/history':
+        $controller->history();
+        break;
+    case '/api/history':
+        if ($method === 'GET')
+            $controller->getHistory();
+        break;
+    case '/api/history/detail':
+        if ($method === 'GET')
+            $controller->getHistoryDetail();
+        break;
     default:
         http_response_code(404);
         echo "404 Not Found";

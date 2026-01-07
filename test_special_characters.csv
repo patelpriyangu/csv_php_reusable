@@ -1,0 +1,12 @@
+sku,product_name,quantity,price
+SPEC001,Product & Company,100,29.99
+SPEC002,Product <HTML>,50,39.99
+SPEC003,Product with 'quotes',75,49.99
+SPEC004,Product with "double quotes",200,59.99
+SPEC005,Product\with\backslash,150,19.99
+SPEC006,Product/with/slash,80,24.99
+SPEC007,Product;with;semicolon,90,34.99
+SPEC008,Product@with@at,110,44.99
+SPEC009,Product#with#hash,120,54.99
+SPEC010,Product%with%percent,130,64.99
+

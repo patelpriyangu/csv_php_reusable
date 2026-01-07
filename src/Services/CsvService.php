@@ -94,26 +94,43 @@ class CsvService
     }
     /**
      * Validates rows against a set of rules.
-     * Rules format: ['field_name' => 'required|numeric|unique:table,col']
+     * Rules format: ['field_name' => 'required|numeric|unique:table,col|unique_in_file']
      * 
      * Returns: [
      *   'valid_rows' => [],
-     *   'errors' => [ row_index => [ 'field' => 'error message' ] ]
+     *   'errors' => [ row_index => [ 'field' => 'error message' ] ],
+     *   'warnings' => [ row_index => [ 'field' => 'warning message' ] ]
      * ]
      */
     public function validate(array $rows, array $rules, ?callable $dbChecker = null): array
     {
         $validRows = [];
         $errors = [];
+        $warnings = [];
 
         // Pre-parse rules to avoid explode() overhead inside the loop
         $parsedRules = [];
+        $uniqueInFileChecks = [];
+        
         foreach ($rules as $field => $ruleString) {
             $parsedRules[$field] = explode('|', $ruleString);
+            
+            // Check if unique_in_file rule exists for this field
+            if (in_array('unique_in_file', $parsedRules[$field])) {
+                $uniqueInFileChecks[$field] = [];
+            }
+        }
+
+        // Track values for unique_in_file validation
+        $seenValues = [];
+        foreach ($uniqueInFileChecks as $field => $placeholder) {
+            $seenValues[$field] = [];
         }
 
         foreach ($rows as $index => $row) {
             $rowErrors = [];
+            $rowWarnings = [];
+            
             foreach ($parsedRules as $field => $ruleList) {
                 $value = $row[$field] ?? null;
 
@@ -123,13 +140,20 @@ class CsvService
                         $rowErrors[$field] = "$field is required.";
                         break;
                     }
-                    if ($rule === 'numeric' && !is_numeric($value)) {
+                    if ($rule === 'numeric' && $value !== '' && $value !== null && !is_numeric($value)) {
                         $rowErrors[$field] = "$field must be a number.";
                     }
                     if (str_starts_with($rule, 'min:')) {
                         $min = (int) substr($rule, 4);
                         if (strlen($value) < $min) {
                             $rowErrors[$field] = "$field must be at least $min chars.";
+                        }
+                    }
+                    if ($rule === 'unique_in_file' && $value !== '' && $value !== null) {
+                        if (isset($seenValues[$field][$value])) {
+                            $rowWarnings[$field] = "$field '$value' appears multiple times (first seen at row " . $seenValues[$field][$value] . "). Last occurrence will be kept.";
+                        } else {
+                            $seenValues[$field][$value] = $index + 1;
                         }
                     }
                     if (str_starts_with($rule, 'custom_unique') && $dbChecker) {
@@ -144,10 +168,18 @@ class CsvService
                 $errors[$index + 1] = $rowErrors;
             } else {
                 $validRows[] = $row;
+                // Add warnings for valid rows
+                if (!empty($rowWarnings)) {
+                    $warnings[$index + 1] = $rowWarnings;
+                }
             }
         }
 
-        return ['valid_rows' => $validRows, 'errors' => $errors];
+        return [
+            'valid_rows' => $validRows, 
+            'errors' => $errors,
+            'warnings' => $warnings
+        ];
     }
 
     /**

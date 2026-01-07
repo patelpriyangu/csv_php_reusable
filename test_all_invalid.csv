@@ -1,0 +1,12 @@
+sku,product_name,quantity,price
+,Missing Everything,,
+INV001,,INVALID,WRONG
+,No SKU,BAD,PRICE
+INV003,,,
+,,,TEXT
+INV005,,999,
+,,ABC,DEF
+INV007,Only Name,,
+,,,12.34
+INV009,,NOT_NUM,
+
